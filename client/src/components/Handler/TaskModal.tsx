@@ -12,12 +12,15 @@ interface TaskModalProps {
 
 const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit, initialData, mode }) => {
   const [taskData, setTaskData] = useState<TaskModel>({
-    taskId: "",
+    taskId: "", 
     name: "",
     content: "",
     startDate: "",
     endDate: "",
     status: TaskStatusEnum.New,
+    createdAt: "",
+    updatedAt: "",
+    activityId: null,
   });
 
   useEffect(() => {
@@ -38,10 +41,6 @@ const TaskModal: React.FC<TaskModalProps> = ({ isOpen, onClose, onSubmit, initia
     e.preventDefault();
     onSubmit(taskData); 
     onClose();
-  };
-
-  const handleTaskSubmit = (taskData: TaskModel) => {
-    console.log("Task Submitted:", taskData);
   };
 
   if (!isOpen) return null;

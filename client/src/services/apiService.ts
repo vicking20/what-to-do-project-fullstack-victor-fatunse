@@ -39,12 +39,13 @@ export const createTask = async (taskData: { name: string, content: string, star
   }; 
 
   export const updateTask = async (taskData: {
-    taskId: number;
+    taskId: number | string;
     name: string;
     content: string;
     startDate: string;
     endDate: string;
     status: number;
+    activityId: number | null;
   }) => {
     try {
       const response = await apiClient.put(`tasks/`, taskData);

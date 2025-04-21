@@ -1,17 +1,17 @@
 //taskeditmodal.tsx
 import { useState, useEffect } from "react";
-import { getActivities, getTasks, updateTask } from "../../services/apiService";
-import { TaskModel } from "../../types/types";
+import { getActivities, updateTask } from "../../services/apiService";
 import { TaskEditModalProps } from "../../types/types";
+import { ActivityModel } from "../../types/types";
 
-export default function TaskEditModal({ task, onTaskUpdated }: TaskEditModalProps) {
+export default function TaskEditModal({ task, onTaskUpdated }: TaskEditModalProps) { 
     const [name, setName] = useState(task.name);
     const [content, setContent] = useState(task.content);
     const [startDate, setStartDate] = useState(task.startDate || "");
     const [endDate, setEndDate] = useState(task.endDate || "");
     const [status, setStatus] = useState(task.status);
     const [activityId, setActivityId] = useState<number | null>(task.activityId);
-    const [activities, setActivities] = useState([]);
+    const [activities, setActivities] = useState<ActivityModel[]>([]);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -35,7 +35,7 @@ export default function TaskEditModal({ task, onTaskUpdated }: TaskEditModalProp
         setLoading(true);
         try {
             await updateTask({
-                taskID: task.taskId,
+                taskId: task.taskId, 
                 name,
                 content,
                 startDate,
@@ -44,7 +44,7 @@ export default function TaskEditModal({ task, onTaskUpdated }: TaskEditModalProp
                 activityId,
         });
         alert("Task Updated");
-        document.getElementById(`task_edit_modal}`)?.close();
+        (document.getElementById(`task_edit_modal_${task.taskId}`) as HTMLDialogElement)?.close();
         onTaskUpdated();
     } catch (error) {
         alert("Failed to update task");
@@ -103,7 +103,10 @@ export default function TaskEditModal({ task, onTaskUpdated }: TaskEditModalProp
         ))}
       </select>
       <div className="modal-action">
-        <button className="btn btn-secondary" onClick={() => document.getElementById(`task_edit_modal_${task.taskId}`)?.close()}>
+        <button
+          className="btn btn-secondary"
+          onClick={() => (document.getElementById(`task_edit_modal_${task.taskId}`) as HTMLDialogElement)?.close()}
+        >
           Cancel
         </button>
         <button className="btn btn-primary" onClick={handleUpdate} disabled={loading}>

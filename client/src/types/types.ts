@@ -30,7 +30,7 @@ Done = 2,
 }
 
 export interface TaskModel {
-    taskId: number;      
+    taskId: number | string;      
     name: string;        
     content: string;     
     startDate: string;  
@@ -46,5 +46,6 @@ export interface NewActivityModalProps {
 }
 
 export interface TaskEditModalProps {
+    task: TaskModel;
     onTaskUpdated: () => void;
 }
