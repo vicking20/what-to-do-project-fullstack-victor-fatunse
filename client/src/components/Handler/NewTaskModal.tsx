@@ -14,7 +14,7 @@ export default function NewTaskModal({ onTaskCreated }: NewTaskModalProps) {
     const [endDate, setEndDate] = useState("");
     const [status, setStatus] = useState<TaskStatusEnum>(TaskStatusEnum.New);
     const [activityId, setActivityId] = useState<number | null>(null);
-    const [activities, setActivities] = useState([]);
+    const [activities, setActivities] = useState<{ activityId: number; name: string }[]>([]);
     const [loading, setLoading] = useState(false);
     const navigate= useNavigate()
 
