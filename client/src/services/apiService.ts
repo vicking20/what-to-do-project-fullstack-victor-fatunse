@@ -26,7 +26,7 @@ export const createTask = async (taskData: { name: string, content: string, star
       console.error("Error creating task:", error);
       throw error;
     }
-  };
+  }; 
 
   export const deleteTask = async (taskId: number) => {
     try {

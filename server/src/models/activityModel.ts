@@ -12,8 +12,8 @@ import {
     AllowNull,
     BeforeDestroy
 } from "sequelize-typescript";
-
 import { TaskModel } from "./taskModel";
+
 @Table({ tableName: "Activities", timestamps: true })
 export class ActivityModel extends Model {
     @PrimaryKey

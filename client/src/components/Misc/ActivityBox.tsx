@@ -435,7 +435,7 @@ export default function ActivityBox() {
             </div>
           ))}
 
-          {renderPagination()}
+          {renderPagination()} {/*function to render pagination on the bottom of the screen (items per page and page number to move to)*/} 
         </>
       )}
       {selectedActivity && (
