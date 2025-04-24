@@ -1,4 +1,3 @@
-//ActivityBox.tsx
 import { useEffect, useState } from "react";
 import { ArrowDown, Calendar, CheckCircle, Ellipsis, Search, SortAsc, Filter } from "lucide-react";
 import { getTasks, getActivities, updateTask } from "../../services/apiService";  
@@ -15,8 +14,8 @@ export default function ActivityBox() {
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<TaskModel | undefined>(undefined);
   const [searchTerm, setSearchTerm] = useState(""); 
-  const [viewMode, setViewMode] = useState("grouped"); // State for view mode
-  const [sortBy, setSortBy] = useState("default"); // State for sorting option
+  const [viewMode, setViewMode] = useState("grouped");
+  const [sortBy, setSortBy] = useState("default");
   const [isEditActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ActivityModel | null>(null);
   const [openActivityOptionsId, setOpenActivityOptionsId] = useState<number | null>(null);
@@ -25,6 +24,8 @@ export default function ActivityBox() {
     dateRange: "all",
     activityId: "all"
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [activitiesPerPage, setActivitiesPerPage] = useState(9);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,42 +44,34 @@ export default function ActivityBox() {
     setActivities(prev => prev.filter(a => a.activityId !== id));
   };
 
-  // Filter tasks based on search term and filter criteria
   const filteredTasks = tasks.filter((task) => {
-    // Text search filter
     const matchesSearch = task.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       task.content.toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Status filter
     const matchesStatus = filters.status === "all" || 
       (filters.status === "new" && task.status === 0) ||
       (filters.status === "inProgress" && task.status === 1) ||
       (filters.status === "done" && task.status === 2);
     
-    // Date range filter
     let matchesDateRange = true;
     const today = new Date();
     const taskDate = task.endDate ? new Date(task.endDate) : null;
     
     if (filters.dateRange !== "all" && taskDate) {
       if (filters.dateRange === "today") {
-        // Check if date is today
         matchesDateRange = taskDate.toDateString() === today.toDateString();
       } else if (filters.dateRange === "thisWeek") {
-        // Check if date is within this week
         const weekStart = new Date(today);
         weekStart.setDate(today.getDate() - today.getDay());
         const weekEnd = new Date(weekStart);
         weekEnd.setDate(weekStart.getDate() + 6);
         matchesDateRange = taskDate >= weekStart && taskDate <= weekEnd;
       } else if (filters.dateRange === "thisMonth") {
-        // Check if date is within this month
         matchesDateRange = taskDate.getMonth() === today.getMonth() && 
                            taskDate.getFullYear() === today.getFullYear();
       }
     }
     
-    // Activity filter
     const matchesActivity = filters.activityId === "all" || 
       task.activityId?.toString() === filters.activityId || 
       (filters.activityId === "general" && !task.activityId);
@@ -86,20 +79,18 @@ export default function ActivityBox() {
     return matchesSearch && matchesStatus && matchesDateRange && matchesActivity;
   });
 
-  // Sort tasks based on selected option
   const sortedTasks = [...filteredTasks].sort((a, b) => {
     switch (sortBy) {
       case "name":
         return a.name.localeCompare(b.name);
       case "date":
-        // Sort by end date, tasks without end date come last
         if (!a.endDate) return 1;
         if (!b.endDate) return -1;
         return new Date(a.endDate).getTime() - new Date(b.endDate).getTime();
       case "status":
         return a.status - b.status;
       default:
-        return 0; // Default keeps original order
+        return 0;
     }
   });
 
@@ -109,6 +100,12 @@ export default function ActivityBox() {
     acc[key].push(task);
     return acc;
   }, {} as Record<number | "general", TaskModel[]>);
+
+  const getPaginatedActivities = () => {
+    const indexOfLastActivity = currentPage * activitiesPerPage;
+    const indexOfFirstActivity = indexOfLastActivity - activitiesPerPage;
+    return activities.slice(indexOfFirstActivity, indexOfLastActivity);
+  };
 
   const handleTaskEdit = (task: TaskModel) => {
     setSelectedTask(task);
@@ -130,7 +127,6 @@ export default function ActivityBox() {
     } 
   };
 
-  //Added a toggle for options in activities so its not cluttered
   const toggleActivityOptions = (activityId: number) => {
     setOpenActivityOptionsId(prev =>
       prev === activityId ? null : activityId
@@ -145,7 +141,8 @@ export default function ActivityBox() {
         content: updatedTask.content,
         startDate: updatedTask.startDate,
         endDate: updatedTask.endDate,
-        status: updatedTask.status as number
+        status: updatedTask.status as number,
+        activityId: null
       };
       await updateTask(taskData);
       setTasks(prev => prev.map(t => 
@@ -158,7 +155,6 @@ export default function ActivityBox() {
     } 
   };
 
-  // Function to render a single task
   const renderTask = (task: TaskModel) => (
     <div key={task.taskId} className="collapse border border-gray-200 mb-4">
       <input type="checkbox" />
@@ -189,7 +185,6 @@ export default function ActivityBox() {
             <CheckCircle className="h-4 w-4" />
             <p>{task.status === 2 ? "Completed" : "Not completed"}</p>
           </div>
-          {/* Show activity name in unified view */}
           {viewMode === "unified" && task.activityId && (
             <div className="badge badge-outline badge-info">
               {activities.find(a => a.activityId === task.activityId)?.name || "Unknown Activity"}
@@ -200,11 +195,55 @@ export default function ActivityBox() {
     </div>
   );
 
+  const renderPagination = () => {
+    const totalPages = Math.ceil(activities.length / activitiesPerPage);
+    
+    return (
+      <div className="flex justify-between items-center mt-6">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-gray-600">Activities per page:</span>
+          <select
+            className="select select-bordered select-sm"
+            value={activitiesPerPage}
+            onChange={(e) => {
+              setActivitiesPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}
+          >
+            <option value={9}>10</option>
+            <option value={19}>20</option>
+            <option value={49}>50</option>
+            <option value={99}>100</option>
+          </select>
+        </div>
+        
+        <div className="join">
+          <button
+            className="join-item btn btn-sm"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            «
+          </button>
+          <button className="join-item btn btn-sm">
+            Page {currentPage} of {totalPages}
+          </button>
+          <button
+            className="join-item btn btn-sm"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            »
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-          {/* Search Bar */}
           <div className="relative flex items-center w-full sm:w-64 border px-2 border-gray-300 rounded-md shadow-sm">
             <div className="text-gray-500">
               <Search className="h-5 w-5" />
@@ -218,7 +257,6 @@ export default function ActivityBox() {
             />
           </div>
   
-          {/* Sort dropdown */}
           <div className="dropdown">
             <div tabIndex={0} role="button" className="btn m-1">
               <SortAsc className="h-4 w-4 mr-1" />
@@ -232,7 +270,6 @@ export default function ActivityBox() {
             </ul>
           </div>
   
-          {/* Filter dropdown */}
           <div className="dropdown">
             <div tabIndex={0} role="button" className="btn m-1">
               <Filter className="h-4 w-4 mr-1" />
@@ -305,7 +342,6 @@ export default function ActivityBox() {
             </div>
           </div>
   
-          {/* View mode */}
           <div>
             <select 
               className="select select-bordered"
@@ -318,13 +354,11 @@ export default function ActivityBox() {
           </div>
         </div>
   
-        {/* TaskComponent */}
         <div>
           <TaskComponent />
         </div>
       </div>
 
-      {/* Task Edit Modal */}
       <TaskModal 
         isOpen={isTaskModalOpen}
         onClose={() => {
@@ -337,7 +371,6 @@ export default function ActivityBox() {
       />
 
       {viewMode === "unified" ? (
-        /* Unified View - All tasks in a single list */
         <div className="space-y-4">
           {sortedTasks.length > 0 ? (
             sortedTasks.map(task => renderTask(task))
@@ -346,9 +379,7 @@ export default function ActivityBox() {
           )}
         </div>
       ) : (
-        /* Grouped View - Tasks grouped by activity */
         <>
-          {/* General Activities*/}
           {tasksByActivity.general?.length > 0 && (
             <div className="collapse border w-full">
               <input type="checkbox" />
@@ -366,8 +397,7 @@ export default function ActivityBox() {
             </div>
           )}
 
-          {/* Activities */}
-          {activities.map((activity) => (
+          {getPaginatedActivities().map((activity) => (
             <div key={activity.activityId} className="collapse border">
               <input type="checkbox" />
               <div className="collapse-title font-semibold" style={{paddingRight: "16px"}}>
@@ -404,6 +434,8 @@ export default function ActivityBox() {
               </div>
             </div>
           ))}
+
+          {renderPagination()}
         </>
       )}
       {selectedActivity && (
@@ -417,6 +449,7 @@ export default function ActivityBox() {
           onUpdate={handleActivityUpdate}
         />
       )}
+      <div className="h-4"></div>
     </div>
   );
 }

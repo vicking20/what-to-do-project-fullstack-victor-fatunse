@@ -1,5 +1,5 @@
 // ErrorPage.tsx
-
+//in the case a random address is entered that the router does not recognize, it ues a wildcard to detect and render a basic 404 page
 const ErrorPage = () => {
     return (
       <div className="container">

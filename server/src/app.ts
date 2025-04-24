@@ -10,7 +10,7 @@ app.use(cors({
     origin: [
       process.env.CLIENT_URL,       
       "http://192.168.0.117:5173"
-      //"http://172.16.3.0:5173"   
+      //"http://172.16.3.0:5173"  alt address used when at work 
     ], 
     methods: "GET,POST,DELETE,PUT"
   }));
